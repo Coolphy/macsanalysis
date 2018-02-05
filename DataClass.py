@@ -13,7 +13,7 @@ class MACSData:
         """
         df = pd.read_csv(filename, skiprows=1, header=None, delim_whitespace=True)
         self.data = df.values
-        print("Datafile " + filename + "has been successfully imported. Data dimensions: " + str(self.data.shape))
+        print("Datafile " + filename + " has been successfully imported. Data dimensions: " + str(self.data.shape))
         return self.data
 
 
@@ -43,6 +43,7 @@ class MACSData:
 
     def plot(self, view_ax=12,
              bin_ax1=[-20,0.02,20], bin_ax2=[-20,0.02,20], bin_ax3=[-20,0.5,40],
+             foldmode=0,
              view_ax1=[], view_ax2=[], view_ax3=[]):
         """
         Plot MACS data based on given parameters and return corresponding figure class.
@@ -61,6 +62,8 @@ class MACSData:
         @param view_ax3: [ax3_plot_min, ax3_plot_max]
         @return: 1D or 2D macs figure class.
         """
+        self.fold(foldmode=foldmode)
+
         if bin_ax1[0] < -10:
             bin_ax1[0] = min(self.data[:, 0])
         if bin_ax1[-1] > 10:
