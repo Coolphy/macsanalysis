@@ -17,7 +17,7 @@ class MACSData:
         return self.data
 
 
-    def fold(self, foldmode = 0):
+    def fold(self, foldmode=0):
         """
         fold data
         @param foldmode: one of following options, 1, 2, 12
@@ -47,7 +47,7 @@ class MACSData:
              view_ax1=[], view_ax2=[], view_ax3=[]):
         """
         Plot MACS data based on given parameters and return corresponding figure class.
-        @param view_ax: the viewing axis,
+        @param view_ax: the viewing axis, supporting 12, 21, 13, 31, 23, 32, 1, 2, 3
                         12 for slice formed by ax1, ax2,
                         13 for slice formed by ax1, ax3,
                         23 for slice formed by ax2, ax3;
@@ -77,17 +77,15 @@ class MACSData:
         if bin_ax3[-1] > 20:
             bin_ax3[-1] = max(self.data[:, 2])
 
-        data_selected = self.__selectdata__(bin_ax1, bin_ax2, bin_ax3)
+        # Generate plot2D class
+        if view_ax > 10:
+            axis_xx = view_ax // 10 - 1
+            axis_yy = view_ax % 10 - 1
 
-        # Generate the grid_xx and grid_yy for creating plot2D instance.
-        if view_ax == 12:
-            grid_xx, grid_yy = self.__mgrid_generate__(bin_ax1, bin_ax2)
-        if view_ax == 13:
-            grid_xx, grid_yy = self.__mgrid_generate__(bin_ax1, bin_ax3)
-        if view_ax == 23:
-            grid_xx, grid_yy = self.__mgrid_generate__(bin_ax2, bin_ax3)
 
-        # Generate the grid_xx
+
+
+        # Generate plot1D class
         
 
 
@@ -100,8 +98,8 @@ class MACSData:
         @param bin_yy:
         @return: same return as np.mgrid
         """
-        grid_xx, grid_yy = np.mgrid[slice(bin_xx[0] - bin_xx[1]/2, bin_xx[2] + bin_xx[1]/2, bin_xx[1]),
-                                    slice(bin_yy[0] - bin_yy[1]/2, bin_yy[2] + bin_yy[1]/2, bin_yy[1])]
+        grid_xx, grid_yy = np.mgrid[slice(bin_xx[0] - bin_xx[1]/2, bin_xx[2] + bin_xx[1]/2 + bin_xx[1], bin_xx[1]),
+                                    slice(bin_yy[0] - bin_yy[1]/2, bin_yy[2] + bin_yy[1]/2 + bin_yy[1], bin_yy[1])]
         return grid_xx, grid_yy
 
         
@@ -122,6 +120,7 @@ class MACSData:
     def __init__(self, filename):
         self.filename = filename
         self.importdata(filename)
+        self.data
         
 
 
