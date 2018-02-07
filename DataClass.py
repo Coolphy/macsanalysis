@@ -100,11 +100,9 @@ class MACSData:
         @param bin_yy:
         @return: same return as np.mgrid
         """
-        grid_xx, grid_yy = np.mgrid[slice(bin_xx[0] - bin_xx[1]/2, bin_xx[2] + bin_xx[1] + bin_xx[1]/2, bin_xx[1]),
-                                    slice(bin_yy[0] - bin_yy[1]/2, bin_yy[2] + bin_yy[1] + bin_yy[1]/2, bin_yy[1])]
+        grid_xx, grid_yy = np.mgrid[slice(bin_xx[0] - bin_xx[1]/2, bin_xx[2] + bin_xx[1]/2, bin_xx[1]),
+                                    slice(bin_yy[0] - bin_yy[1]/2, bin_yy[2] + bin_yy[1]/2, bin_yy[1])]
         return grid_xx, grid_yy
-
-
 
         
     def __selectdata__(self, bin_ax1, bin_ax2, bin_ax3):
