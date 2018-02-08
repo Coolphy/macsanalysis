@@ -80,7 +80,7 @@ class MACSData:
         if bin_ax3[-1] > 20:
             bin_ax3[-1] = max(self.data[:, 2])
 
-        points = self.__selectdata__(bin_ax1, bin_ax2, bin_ax3)
+        points = self.__select_data__(bin_ax1, bin_ax2, bin_ax3)
         bin_ax = [bin_ax1, bin_ax2, bin_ax3]
 
         # Generate plot2D class
@@ -91,18 +91,18 @@ class MACSData:
             bin_xx = bin_ax[view_xx]
             bin_yy = bin_ax[view_yy]
 
-            size_xx = np.floor((bin_xx[-1] - bin_xx[0] + 3/2*bin_xx[1]) / bin_xx[1])
-            size_yy = np.floor((bin_yy[-1] - bin_yy[0] + 3/2*bin_yy[1]) / bin_yy[1])
+            size_xx = int(np.floor((bin_xx[-1] - bin_xx[0] + 3/2*bin_xx[1]) / bin_xx[1]))
+            size_yy = int(np.floor((bin_yy[-1] - bin_yy[0] + 3/2*bin_yy[1]) / bin_yy[1]))
             _intensity = np.zeros((size_xx, size_yy))
             _error = np.zeros((size_xx, size_yy))
             _point_num = np.zeros((size_xx, size_yy))
 
             for point in points:
-                mm = np.floor((point[view_xx] - (bin_xx[0] - bin_xx[1]/2)) / bin_xx[1])
-                nn = np.floor((point[view_yy] - (bin_yy[0] - bin_yy[1]/2)) / bin_yy[1])
-                _intensity[mm, nn] += point[4]
-                _error[mm, nn] = np.sqrt(point[5]**2 + _error[mm, nn]**2)
-                _point_num += 1
+                mm = int(np.floor((point[view_xx] - (bin_xx[0] - bin_xx[1]/2)) / bin_xx[1]))
+                nn = int(np.floor((point[view_yy] - (bin_yy[0] - bin_yy[1]/2)) / bin_yy[1]))
+                _intensity[mm, nn] += point[3]
+                _error[mm, nn] = np.sqrt(point[4]**2 + _error[mm, nn]**2)
+                _point_num[mm, nn] += 1
 
             intensity = np.zeros((size_xx, size_yy))
             error = np.zeros((size_xx, size_yy))
@@ -134,8 +134,7 @@ class MACSData:
                                     slice(bin_yy[0] - bin_yy[1]/2, bin_yy[-1] + bin_yy[1]/2 + bin_yy[1], bin_yy[1])]
         return grid_xx, grid_yy
 
-        
-    def __selectdata__(self, bin_ax1, bin_ax2, bin_ax3):
+    def __select_data__(self, bin_ax1, bin_ax2, bin_ax3):
         """
         internal method, select data in the given box
         @param bin_ax1:
@@ -144,9 +143,9 @@ class MACSData:
         @return: np.ndarray data type.
         """
         data = self.data
-        return data[(data[:,0] >= bin_ax1[0]) and (data[:,0] <= bin_ax1[-1])
-                    and (data[:,1] >= bin_ax2[0]) and (data[:,1] <= bin_ax2[-1])
-                    and (data[:,2] >= bin_ax3[0]) and (data[:,2] <= bin_ax3[-1])]
+        return data[((data[:,0] >= bin_ax1[0]) & (data[:,0] <= bin_ax1[-1])
+                    & (data[:,1] >= bin_ax2[0]) & (data[:,1] <= bin_ax2[-1])
+                    & (data[:,2] >= bin_ax3[0]) & (data[:,2] <= bin_ax3[-1]))]
 
     def __init__(self, filename=None):
         if filename is not None:
@@ -174,6 +173,9 @@ class Plot2D:
 
     def plot(self, view_ax1=None, view_ax2=None, view_ax3=None):
         plt.pcolor(self.grid_xx, self.grid_yy, self.intensity)
+        plt.clim(0, 1)
+        plt.set_cmap('jet')
+        plt.colorbar()
         plt.show()
 
     def __init__(self, grid_xx, grid_yy, intensity, error):
