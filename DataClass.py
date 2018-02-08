@@ -47,7 +47,7 @@ class MACSData:
     def plot(self, view_ax=12,
              bin_ax1=[-20,0.02,20], bin_ax2=[-20,0.02,20], bin_ax3=[-20,0.5,40],
              foldmode=0,
-             view_ax1=[], view_ax2=[], view_ax3=[]):
+             view_ax1=None, view_ax2=None, view_ax3=None):
         """
         Plot MACS data based on given parameters and return corresponding figure class.
         @param view_ax: the viewing axis, supporting 12, 21, 13, 31, 23, 32, 1, 2, 3
@@ -104,14 +104,21 @@ class MACSData:
                 _error[mm, nn] = np.sqrt(point[5]**2 + _error[mm, nn]**2)
                 _point_num += 1
 
+            intensity = np.zeros((size_xx, size_yy))
+            error = np.zeros((size_xx, size_yy))
+            for mm in range(0, size_xx):
+                for nn in range(0, size_yy):
+                    if (_point_num[mm, nn] == 0):
+                        intensity[mm, nn] = None
+                        error[mm, nn] = None
+                    else:
+                        intensity[mm, nn] = _intensity[mm, nn]/_point_num[mm, nn]
+                        error[mm, nn] = _error[mm, nn]/_point_num[mm, nn]
 
-
-
-
-
-
-        # Generate plot1D class
-        
+            grid_xx, grid_yy = self.__mgrid_generate__(bin_xx, bin_yy)
+            plot2D = Plot2D(grid_xx=grid_xx, grid_yy=grid_yy, intensity=intensity, error=error)
+            plot2D.plot(view_ax1, view_ax2, view_ax3)
+            return plot2D
 
 
 
@@ -150,7 +157,7 @@ class MACSData:
 
 
 
-class plot1D:
+class Plot1D:
     def plot(self, view_ax1, view_ax2, view_ax3):
         fig, ax = plt.figure()
         ax.errorbar(x=self.data[:,0], y=self.data[:,1], yerr=self.data[:,2])
@@ -163,7 +170,14 @@ class plot1D:
         self.data = data
 
 
-class plot2D:
+class Plot2D:
 
-    def plot(self, view_ax1, view_ax2, view_ax3):
-        print()
+    def plot(self, view_ax1=None, view_ax2=None, view_ax3=None):
+        plt.pcolor(self.grid_xx, self.grid_yy, self.intensity)
+        plt.show()
+
+    def __init__(self, grid_xx, grid_yy, intensity, error):
+        self.grid_xx = grid_xx
+        self.grid_yy = grid_yy
+        self.intensity = intensity
+        self.error = error
