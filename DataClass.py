@@ -11,6 +11,9 @@ class MACSData:
         @param filename: string type, full name including suffix is required. Example: "mydata.txt"
         @return: np.ndarray type.
         """
+        if filename is None:
+            print("Warning: no file name specified, please check")
+            return
         df = pd.read_csv(filename, skiprows=1, header=None, delim_whitespace=True)
         self.data = df.values
         print("Datafile " + filename + " has been successfully imported. Data dimensions: " + str(self.data.shape))
@@ -77,10 +80,32 @@ class MACSData:
         if bin_ax3[-1] > 20:
             bin_ax3[-1] = max(self.data[:, 2])
 
+        points = self.__selectdata__(bin_ax1, bin_ax2, bin_ax3)
+        bin_ax = [bin_ax1, bin_ax2, bin_ax3]
+
         # Generate plot2D class
         if view_ax > 10:
-            axis_xx = view_ax // 10 - 1
-            axis_yy = view_ax % 10 - 1
+
+            view_xx = view_ax // 10 - 1 # -1 for 0 index
+            view_yy = view_ax % 10 - 1
+            bin_xx = bin_ax[view_xx]
+            bin_yy = bin_ax[view_yy]
+
+            size_xx = np.floor((bin_xx[-1] - bin_xx[0] + 3/2*bin_xx[1]) / bin_xx[1])
+            size_yy = np.floor((bin_yy[-1] - bin_yy[0] + 3/2*bin_yy[1]) / bin_yy[1])
+            _intensity = np.zeros((size_xx, size_yy))
+            _error = np.zeros((size_xx, size_yy))
+            _point_num = np.zeros((size_xx, size_yy))
+
+            for point in points:
+                mm = np.floor((point[view_xx] - (bin_xx[0] - bin_xx[1]/2)) / bin_xx[1])
+                nn = np.floor((point[view_yy] - (bin_yy[0] - bin_yy[1]/2)) / bin_yy[1])
+                _intensity[mm, nn] += point[4]
+                _error[mm, nn] = np.sqrt(point[5]**2 + _error[mm, nn]**2)
+                _point_num += 1
+
+
+
 
 
 
@@ -98,8 +123,8 @@ class MACSData:
         @param bin_yy:
         @return: same return as np.mgrid
         """
-        grid_xx, grid_yy = np.mgrid[slice(bin_xx[0] - bin_xx[1]/2, bin_xx[2] + bin_xx[1]/2 + bin_xx[1], bin_xx[1]),
-                                    slice(bin_yy[0] - bin_yy[1]/2, bin_yy[2] + bin_yy[1]/2 + bin_yy[1], bin_yy[1])]
+        grid_xx, grid_yy = np.mgrid[slice(bin_xx[0] - bin_xx[1]/2, bin_xx[-1] + bin_xx[1]/2 + bin_xx[1], bin_xx[1]),
+                                    slice(bin_yy[0] - bin_yy[1]/2, bin_yy[-1] + bin_yy[1]/2 + bin_yy[1], bin_yy[1])]
         return grid_xx, grid_yy
 
         
@@ -116,12 +141,13 @@ class MACSData:
                     and (data[:,1] >= bin_ax2[0]) and (data[:,1] <= bin_ax2[-1])
                     and (data[:,2] >= bin_ax3[0]) and (data[:,2] <= bin_ax3[-1])]
 
+    def __init__(self, filename=None):
+        if filename is not None:
+            self.filename = filename
+            self.importdata(filename)
+        else:
+            print("Warning: no filename is specified.")
 
-    def __init__(self, filename):
-        self.filename = filename
-        self.importdata(filename)
-        self.data
-        
 
 
 class plot1D:
