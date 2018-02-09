@@ -22,7 +22,7 @@ class MACSData:
 
     def fold(self, foldmode=0):
         """
-        fold data
+        fold data, original data field will be modified.
         @param foldmode: one of following options, 1, 2, 12
                          0 no change
                          1 for folding along ax1
@@ -30,7 +30,7 @@ class MACSData:
                          12 for folding alont ax1 and ax2
         @return: self.data changes by this method.
         """
-        if foldmode is 0:
+        if foldmode == 0:
             return
         if foldmode == 1:
             self.data[:, 1] = abs(self.data[:, 1])
@@ -43,6 +43,29 @@ class MACSData:
             self.data[:, 1] = abs(self.data[:, 1])
             return
 
+    def __fold__(self, data, foldmode=0):
+        """
+        internal function for data folding.
+        @param foldmode: one of following options, 1, 2, 12
+                         0 no change
+                         1 for folding along ax1
+                         2 for folding along ax2
+                         12 for folding alont ax1 and ax2
+        @return: self.data changes by this method.
+        """
+
+        if foldmode == 0:
+            return data
+        if foldmode == 1:
+            data[:, 1] = abs(data[:, 1])
+            return data
+        if foldmode == 2:
+            data[:, 0] = abs(data[:, 0])
+            return data
+        if foldmode == 12:
+            data[:, 0] = abs(data[:, 0])
+            data[:, 1] = abs(data[:, 1])
+            return data
 
     def plot(self, view_ax=12,
              bin_ax1=[-20,0.02,20], bin_ax2=[-20,0.02,20], bin_ax3=[-20,0.5,40],
@@ -65,7 +88,6 @@ class MACSData:
         @param view_ax3: [ax3_plot_min, ax3_plot_max]
         @return: 1D or 2D macs figure class.
         """
-        self.fold(foldmode=foldmode)
 
         if bin_ax1[0] < -10:
             bin_ax1[0] = min(self.data[:, 0])
@@ -80,7 +102,9 @@ class MACSData:
         if bin_ax3[-1] > 20:
             bin_ax3[-1] = max(self.data[:, 2])
 
-        points = self.__select_data__(bin_ax1, bin_ax2, bin_ax3)
+        data = self.data
+        data = self.__fold__(data, foldmode=foldmode)
+        points = self.__select_data__(data, bin_ax1, bin_ax2, bin_ax3)
         bin_ax = [bin_ax1, bin_ax2, bin_ax3]
 
         # Generate plot2D class
@@ -149,8 +173,8 @@ class MACSData:
 
             grid_xx = np.arange(bin_xx[0], bin_xx[2] + bin_xx[1]/2, bin_xx[1])
             plot1D = Plot1D(grid_xx=grid_xx, intensity=intensity, error=error)
-            plot1D.plot()
-
+            plot1D.plot(view_ax1, view_ax2, view_ax3)
+            return plot1D
 
         #TODO: Implement subraction functions.
 
@@ -169,7 +193,7 @@ class MACSData:
                                     slice(bin_yy[0] - bin_yy[1]/2, bin_yy[-1] + bin_yy[1]/2 + bin_yy[1], bin_yy[1])]
         return grid_xx, grid_yy
 
-    def __select_data__(self, bin_ax1, bin_ax2, bin_ax3):
+    def __select_data__(self, data, bin_ax1, bin_ax2, bin_ax3):
         """
         internal method, select data in the given box
         @param bin_ax1:
@@ -177,7 +201,6 @@ class MACSData:
         @param bin_ax3:
         @return: np.ndarray data type.
         """
-        data = self.data
         return data[((data[:,0] >= bin_ax1[0]) & (data[:,0] <= bin_ax1[-1])
                     & (data[:,1] >= bin_ax2[0]) & (data[:,1] <= bin_ax2[-1])
                     & (data[:,2] >= bin_ax3[0]) & (data[:,2] <= bin_ax3[-1]))]
