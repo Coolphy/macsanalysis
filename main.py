@@ -9,4 +9,5 @@ ltData = MACSData(ltFilename) # low temperature data
 htFilename = "CeCoIn5_2p5K_4T.txt"
 htData = MACSData(htFilename) # high temperature data
 
-ltData.plot(view_ax=12, bin_ax1=[-1,0.02,1],bin_ax2=[-2,0.02,0.5],bin_ax3=[0.49,0.05,0.51])
+#ltData.plot(view_ax=12, bin_ax1=[-1,0.02,1],bin_ax2=[-2,0.02,0.5],bin_ax3=[0.49,0.05,0.51])
+ltData.plot(view_ax=1,bin_ax1=[-2,0.025,2],bin_ax2=[-0.6,-0.4],bin_ax3=[0.29,0.31])

@@ -108,7 +108,7 @@ class MACSData:
             error = np.zeros((size_xx, size_yy))
             for mm in range(0, size_xx):
                 for nn in range(0, size_yy):
-                    if (_point_num[mm, nn] == 0):
+                    if _point_num[mm, nn] == 0:
                         intensity[mm, nn] = None
                         error[mm, nn] = None
                     else:
@@ -118,7 +118,42 @@ class MACSData:
             grid_xx, grid_yy = self.__mgrid_generate__(bin_xx, bin_yy)
             plot2D = Plot2D(grid_xx=grid_xx, grid_yy=grid_yy, intensity=intensity, error=error)
             plot2D.plot(view_ax1, view_ax2, view_ax3)
+            #TODO: Impletment interface for plot2D, delegate other parameters.
             return plot2D
+
+        # generate plot1D class
+        else:
+            view_xx = view_ax - 1
+            bin_xx = bin_ax[view_xx]
+
+            size_xx = int(np.floor((bin_xx[-1] - bin_xx[0] + 3/2*bin_xx[1]) / bin_xx[1]))
+            _intensity = np.zeros(size_xx)
+            _error = np.zeros(size_xx)
+            _point_num = np.zeros(size_xx)
+
+            for point in points:
+                mm = int(np.floor((point[view_xx] - (bin_xx[0] - bin_xx[1] / 2)) / bin_xx[1]))
+                _intensity[mm] += point[3]
+                _error[mm] = np.sqrt(_error[mm]**2 + point[4]**2)
+                _point_num[mm] += 1
+
+            intensity = np.zeros(size_xx)
+            error = np.zeros(size_xx)
+            for mm in range(0, size_xx):
+                if _point_num[mm] == 0:
+                    intensity[mm] = None
+                    error[mm] = None
+                else:
+                    intensity[mm] = _intensity[mm]/_point_num[mm]
+                    error[mm] = _error[mm]/_point_num[mm]
+
+            grid_xx = np.arange(bin_xx[0], bin_xx[2] + bin_xx[1]/2, bin_xx[1])
+            plot1D = Plot1D(grid_xx=grid_xx, intensity=intensity, error=error)
+            plot1D.plot()
+
+
+        #TODO: Implement subraction functions.
+
 
 
 
@@ -157,16 +192,18 @@ class MACSData:
 
 
 class Plot1D:
-    def plot(self, view_ax1, view_ax2, view_ax3):
-        fig, ax = plt.figure()
-        ax.errorbar(x=self.data[:,0], y=self.data[:,1], yerr=self.data[:,2])
+    def plot(self, view_ax1=None, view_ax2=None, view_ax3=None):
+        #fig, ax = plt.figure()
+        plt.figure()
+        plt.errorbar(x=self.grid_xx, y=self.intensity, yerr=self.error)
         plt.show()
         plt.ion()
-        return fig, ax
+        return None
 
-
-    def __init__(self, data):
-        self.data = data
+    def __init__(self, grid_xx, intensity, error):
+        self.grid_xx = grid_xx
+        self.intensity = intensity
+        self.error = error
 
 
 class Plot2D:
