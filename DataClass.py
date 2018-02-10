@@ -90,7 +90,6 @@ class MACSData:
         @param view_ax3: [ax3_plot_min, ax3_plot_max]
         @return: 1D or 2D macs figure class.
         """
-        #TODO: check the dimension mismatch for plot2D class.
         if bin_ax1[0] < -10:
             bin_ax1[0] = min(self.data[:, 0])
         if bin_ax1[-1] > 10:
@@ -117,8 +116,11 @@ class MACSData:
             bin_xx = bin_ax[view_xx]
             bin_yy = bin_ax[view_yy]
 
-            size_xx = int(np.floor((bin_xx[-1] - bin_xx[0] + 3/2*bin_xx[1]) / bin_xx[1]))
-            size_yy = int(np.floor((bin_yy[-1] - bin_yy[0] + 3/2*bin_yy[1]) / bin_yy[1]))
+            # change grid_xx, grid_yy generate function. Solve the float arithmetic issue.
+            grid_xx, grid_yy = self.__mgrid_generate__(bin_xx, bin_yy)
+            #size_xx = int(np.floor((bin_xx[-1] - bin_xx[0] + 3/2*bin_xx[1] + 0.00001) / bin_xx[1])) + 1
+            #size_yy = int(np.floor((bin_yy[-1] - bin_yy[0] + 3/2*bin_yy[1] + 0.00001) / bin_yy[1])) + 1
+            size_xx, size_yy = np.shape(grid_xx)
             _intensity = np.zeros((size_xx, size_yy))
             _error = np.zeros((size_xx, size_yy))
             _point_num = np.zeros((size_xx, size_yy))
@@ -141,7 +143,6 @@ class MACSData:
                         intensity[mm, nn] = _intensity[mm, nn]/_point_num[mm, nn]
                         error[mm, nn] = _error[mm, nn]/_point_num[mm, nn]
 
-            grid_xx, grid_yy = self.__mgrid_generate__(bin_xx, bin_yy)
             plot2D = Plot2D(grid_xx=grid_xx, grid_yy=grid_yy, intensity=intensity, error=error)
             if plotflag:
                 plot2D.plot(*args, **kwargs)
@@ -187,8 +188,13 @@ class MACSData:
         @param bin_yy:
         @return: same return as np.mgrid
         """
-        grid_xx, grid_yy = np.mgrid[slice(bin_xx[0] - bin_xx[1]/2, bin_xx[-1] + bin_xx[1]/2 + bin_xx[1], bin_xx[1]),
-                                    slice(bin_yy[0] - bin_yy[1]/2, bin_yy[-1] + bin_yy[1]/2 + bin_yy[1], bin_yy[1])]
+        #grid_xx, grid_yy = np.mgrid[slice(bin_xx[0] - bin_xx[1]/2, bin_xx[-1] + bin_xx[1]/2 + bin_xx[1], bin_xx[1]),
+        #                            slice(bin_yy[0] - bin_yy[1]/2, bin_yy[-1] + bin_yy[1]/2 + bin_yy[1], bin_yy[1])]
+        # use meshgrid instead mgrid to generate grid_xx and grid_yy. add tol 0.0000001 to solve arithmetic problem.
+        grid_xx, grid_yy = np.meshgrid(np.arange(bin_xx[0] - bin_xx[1]/2, bin_xx[-1] + 3*bin_xx[1]/2 + 0.0000001, bin_xx[1]),
+                                    np.arange(bin_yy[0] - bin_yy[1]/2, bin_yy[-1] + 3*bin_yy[1]/2 + 0.0000001, bin_yy[1]))
+        grid_xx = np.transpose(grid_xx)
+        grid_yy = np.transpose(grid_yy)
         return grid_xx, grid_yy
 
     def __select_data__(self, data, bin_ax1, bin_ax2, bin_ax3):
@@ -392,8 +398,8 @@ def subtraction(plot1, plot2, plotmode=0, *args, **kwargs):
 
         intensity = np.zeros(np.shape(grid_xx))
         error = np.zeros(np.shape(grid_xx))
-        for mm in range(0, np.shape(grid_xx)[0]-1):
-            for nn in range(0, np.shape(grid_xx)[1]-1):
+        for mm in range(0, np.shape(grid_xx)[0]):
+            for nn in range(0, np.shape(grid_xx)[1]):
                 if np.isnan(intensity1[mm, nn]) or np.isnan(intensity2[mm, nn]) \
                         or np.isnan(error1[mm, nn]) or np.isnan(error2[mm, nn]):
                     intensity[mm, nn] = None
