@@ -70,7 +70,8 @@ class MACSData:
     def plot(self, view_ax=12,
              bin_ax1=[-20,0.02,20], bin_ax2=[-20,0.02,20], bin_ax3=[-20,0.5,40],
              foldmode=0,
-             view_ax1=None, view_ax2=None, view_ax3=None):
+             plotflag=True,
+             *args,**kwargs):
         """
         Plot MACS data based on given parameters and return corresponding figure class.
         @param view_ax: the viewing axis, supporting 12, 21, 13, 31, 23, 32, 1, 2, 3
@@ -83,6 +84,7 @@ class MACSData:
         @param bin_ax1: [ax1_bin_min, ax1_bin_step, ax1_bin_max]
         @param bin_ax2: [ax2_bin_min, ax2_bin_step, ax2_bin_max]
         @param bin_ax3: [ax3_bin_min, ax3_bin_step, ax3_bin_max]
+        @param foldmode: 1 folding along axis1, 2 folding along axis2, 12 folding along axis1 and axis2
         @param view_ax1: [ax1_plot_min, ax1_plot_max]
         @param view_ax2: [ax2_plot_min, ax2_plot_max]
         @param view_ax3: [ax3_plot_min, ax3_plot_max]
@@ -102,7 +104,7 @@ class MACSData:
         if bin_ax3[-1] > 20:
             bin_ax3[-1] = max(self.data[:, 2])
 
-        data = self.data
+        data = np.copy(self.data)
         data = self.__fold__(data, foldmode=foldmode)
         points = self.__select_data__(data, bin_ax1, bin_ax2, bin_ax3)
         bin_ax = [bin_ax1, bin_ax2, bin_ax3]
@@ -141,8 +143,8 @@ class MACSData:
 
             grid_xx, grid_yy = self.__mgrid_generate__(bin_xx, bin_yy)
             plot2D = Plot2D(grid_xx=grid_xx, grid_yy=grid_yy, intensity=intensity, error=error)
-            plot2D.plot(view_ax1, view_ax2, view_ax3)
-            #TODO: Impletment interface for plot2D, delegate other parameters.
+            if plotflag:
+                plot2D.plot(*args, **kwargs)
             return plot2D
 
         # generate plot1D class
@@ -173,13 +175,11 @@ class MACSData:
 
             grid_xx = np.arange(bin_xx[0], bin_xx[2] + bin_xx[1]/2, bin_xx[1])
             plot1D = Plot1D(grid_xx=grid_xx, intensity=intensity, error=error)
-            plot1D.plot(view_ax1, view_ax2, view_ax3)
+            if plotflag:
+                plot1D.plot(*args, **kwargs)
             return plot1D
 
         #TODO: Implement subraction functions.
-
-
-
 
 
     def __mgrid_generate__(self, bin_xx, bin_yy):
@@ -215,13 +215,43 @@ class MACSData:
 
 
 class Plot1D:
-    def plot(self, view_ax1=None, view_ax2=None, view_ax3=None):
-        #fig, ax = plt.figure()
-        plt.figure()
-        plt.errorbar(x=self.grid_xx, y=self.intensity, yerr=self.error)
+    def plot(self, *args, **kwargs):
+        """
+        personalized plot is allowed.
+        xlim, ylim, title, legend, xlabel, ylabel are fields specified for figure ax.
+        other input arguements will be passed to plt.errorbar()
+        @param args:
+        @param kwargs:
+        @return:
+        """
+        fig, ax = plt.subplots(nrows=1, ncols=1)
+
+        xlim = kwargs.pop('xlim', None)
+        ylim = kwargs.pop('ylim', None)
+        title = kwargs.pop('title', None)
+        legend = kwargs.pop('legend', None)
+        xlabel = kwargs.pop('xlabel', None)
+        ylabel = kwargs.pop('ylabel', None)
+
+        ax.errorbar(x=self.grid_xx, y=self.intensity, yerr=self.error, *args, **kwargs)
+
+        if xlim:
+            ax.set_xlim(xlim)
+        if ylim:
+            ax.set_ylim(ylim)
+        if xlabel:
+            ax.set_xlabel(xlabel)
+        if ylabel:
+            ax.set_ylabel(ylabel)
+        if title:
+            plt.title(title)
+        if legend:
+            plt.legend(legend)
+
         plt.show()
-        plt.ion()
-        return None
+        self.fig = fig
+        self.ax = ax
+        return fig, ax
 
     def __init__(self, grid_xx, intensity, error):
         self.grid_xx = grid_xx
@@ -231,12 +261,44 @@ class Plot1D:
 
 class Plot2D:
 
-    def plot(self, view_ax1=None, view_ax2=None, view_ax3=None):
-        plt.pcolor(self.grid_xx, self.grid_yy, self.intensity)
-        plt.clim(0, 1)
-        plt.set_cmap('jet')
-        plt.colorbar()
+    def plot(self, *args, **kwargs):
+        """
+        personalized plot is allowed.
+        xlim, ylim, title, legend, xlabel, ylabel, colorbar, clim, cmap are fields specified for figure ax.
+        other input arguements will be passed to plt.pcolor()
+        @param args:
+        @param kwargs:
+        @return:
+        """
+        fig, ax = plt.subplots(nrows=1, ncols=1)
+
+        xlim = kwargs.pop('xlim', None)
+        ylim = kwargs.pop('ylim', None)
+        title = kwargs.pop('title', None)
+        legend = kwargs.pop('legend', None)
+        xlabel = kwargs.pop('xlabel', None)
+        ylabel = kwargs.pop('ylabel', None)
+        cmap = kwargs.pop('cmap', 'jet')
+        clim = kwargs.pop('clim',(0,1))
+        ax.pcolor(self.grid_xx, self.grid_yy, self.intensity,cmap=cmap,vmin=clim[0],vmax=clim[1])
+
+        if xlim:
+            ax.set_xlim(xlim)
+        if ylim:
+            ax.set_ylim(ylim)
+        if xlabel:
+            ax.set_xlabel(xlabel)
+        if ylabel:
+            ax.set_ylabel(ylabel)
+        if title:
+            plt.title(title)
+        if legend:
+            plt.legend(legend)
         plt.show()
+
+        self.fig = fig
+        self.ax = ax
+        return fig, ax
 
     def __init__(self, grid_xx, grid_yy, intensity, error):
         self.grid_xx = grid_xx
