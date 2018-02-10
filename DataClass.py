@@ -90,7 +90,7 @@ class MACSData:
         @param view_ax3: [ax3_plot_min, ax3_plot_max]
         @return: 1D or 2D macs figure class.
         """
-
+        #TODO: check the dimension mismatch for plot2D class.
         if bin_ax1[0] < -10:
             bin_ax1[0] = min(self.data[:, 0])
         if bin_ax1[-1] > 10:
@@ -179,8 +179,6 @@ class MACSData:
                 plot1D.plot(*args, **kwargs)
             return plot1D
 
-        #TODO: Implement subraction functions.
-
 
     def __mgrid_generate__(self, bin_xx, bin_yy):
         """
@@ -211,7 +209,6 @@ class MACSData:
             self.importdata(filename)
         else:
             print("Warning: no filename is specified.")
-
 
 
 class Plot1D:
@@ -265,7 +262,6 @@ class Plot2D:
         """
         personalized plot is allowed.
         xlim, ylim, title, legend, xlabel, ylabel, colorbar, clim, cmap are fields specified for figure ax.
-        other input arguements will be passed to plt.pcolor()
         @param args:
         @param kwargs:
         @return:
@@ -279,9 +275,12 @@ class Plot2D:
         xlabel = kwargs.pop('xlabel', None)
         ylabel = kwargs.pop('ylabel', None)
         cmap = kwargs.pop('cmap', 'jet')
-        clim = kwargs.pop('clim',(0,1))
-        ax.pcolor(self.grid_xx, self.grid_yy, self.intensity,cmap=cmap,vmin=clim[0],vmax=clim[1])
-
+        clim = kwargs.pop('clim', (min(x for x in self.intensity.flatten() if ~np.isnan(x)),
+                                   max(x for x in self.intensity.flatten() if ~np.isnan(x))))
+        colorbar = kwargs.pop('colorbar',True)
+        cax = ax.pcolor(self.grid_xx, self.grid_yy, self.intensity,cmap=cmap,vmin=clim[0],vmax=clim[1])
+        if colorbar:
+            fig.colorbar(cax)
         if xlim:
             ax.set_xlim(xlim)
         if ylim:
@@ -305,3 +304,105 @@ class Plot2D:
         self.grid_yy = grid_yy
         self.intensity = intensity
         self.error = error
+
+
+def subtraction(plot1, plot2, plotmode=0, *args, **kwargs):
+    """
+    compare and direct subtract two PlotClass, plot1-plot2
+    @param plot1: can either be Plot1D or Plot2D
+    @param plot2: can either be Plot1D or Plot2D
+    @param plotmode: 0 for no plot
+                     1 for subplot
+                     2 for individual
+    @return: Plot1D instance or Plot2D instance, depends on the input
+    """
+    type1 = type(plot1)
+    type2 = type(plot2)
+    if type1 != type2:
+        print("Parameter type mismatch: " + str(type1) + " and " + str(type2))
+        return
+    if type1 != Plot1D and type1 != Plot2D:
+        print("Type error: " + str(type1))
+        return
+
+    if np.shape(plot1.grid_xx) != np.shape(plot2.grid_xx):
+        print("Dimension mismatch: grid_xx fields are different")
+        return
+    elif any(x == False for x in (plot1.grid_xx == plot2.grid_xx).flatten()):
+        print("Warning: grid_xx number mismatch, please check the bin range of original plot")
+
+    # subtraction for Plot1D class
+    if type1 == Plot1D:
+        grid_xx = np.copy(plot1.grid_xx)
+        intensity1 = np.copy(plot1.intensity)
+        error1 = np.copy(plot1.error)
+        intensity2 = np.copy(plot2.intensity)
+        error2 = np.copy(plot2.error)
+
+        intensity = np.zeros(np.shape(grid_xx))
+        error = np.zeros(np.shape(grid_xx))
+
+        for mm in range(0, np.shape(grid_xx)[0]):
+            if np.isnan(intensity1[mm]) or np.isnan(intensity2[mm]) or np.isnan(error1[mm]) or np.isnan(error2[mm]):
+                intensity[mm] = None
+                error[mm] = None
+            else:
+                intensity[mm] = intensity1[mm] - intensity2[mm]
+                error[mm] = np.sqrt(error1[mm]**2 + error2[mm]**2)
+
+        plot1D = Plot1D(grid_xx=grid_xx, intensity=intensity, error=error)
+
+        if plotmode == 1:
+
+            fig, ax = plt.subplots(nrows=1, ncols=1)
+
+            xlim = kwargs.pop('xlim', None)
+            ylim = kwargs.pop('ylim', None)
+            title = kwargs.pop('title', None)
+            legend = kwargs.pop('legend', None)
+            xlabel = kwargs.pop('xlabel', None)
+            ylabel = kwargs.pop('ylabel', None)
+
+            ax.errorbar(x=grid_xx, y=intensity1, yerr=error1, *args, **kwargs)
+            ax.errorbar(x=grid_xx, y=intensity2, yerr=error2, *args, **kwargs)
+
+            if xlim:
+                ax.set_xlim(xlim)
+            if ylim:
+                ax.set_ylim(ylim)
+            if xlabel:
+                ax.set_xlabel(xlabel)
+            if ylabel:
+                ax.set_ylabel(ylabel)
+            if title:
+                plt.title(title)
+            if legend:
+                plt.legend(legend)
+            plt.show()
+
+        return plot1D
+
+    else:
+        grid_xx = np.copy(plot1.grid_xx)
+        grid_yy = np.copy(plot1.grid_yy)
+        intensity1 = np.copy(plot1.intensity)
+        error1 = np.copy(plot1.error)
+        intensity2 = np.copy(plot2.intensity)
+        error2 = np.copy(plot2.error)
+
+        intensity = np.zeros(np.shape(grid_xx))
+        error = np.zeros(np.shape(grid_xx))
+        for mm in range(0, np.shape(grid_xx)[0]-1):
+            for nn in range(0, np.shape(grid_xx)[1]-1):
+                if np.isnan(intensity1[mm, nn]) or np.isnan(intensity2[mm, nn]) \
+                        or np.isnan(error1[mm, nn]) or np.isnan(error2[mm, nn]):
+                    intensity[mm, nn] = None
+                    error[mm, nn] = None
+                else:
+                    intensity[mm, nn] = intensity1[mm, nn] - intensity2[mm, nn]
+                    error[mm, nn] = np.sqrt(error1[mm, nn]**2 + error2[mm, nn]**2)
+
+        plot2D = Plot2D(grid_xx=grid_xx, grid_yy=grid_yy, intensity=intensity, error=error)
+        return plot2D
+
+
