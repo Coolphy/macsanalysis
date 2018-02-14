@@ -190,6 +190,7 @@ class MACSData:
         """
         #grid_xx, grid_yy = np.mgrid[slice(bin_xx[0] - bin_xx[1]/2, bin_xx[-1] + bin_xx[1]/2 + bin_xx[1], bin_xx[1]),
         #                            slice(bin_yy[0] - bin_yy[1]/2, bin_yy[-1] + bin_yy[1]/2 + bin_yy[1], bin_yy[1])]
+
         # use meshgrid instead mgrid to generate grid_xx and grid_yy. add tol 0.0000001 to solve arithmetic problem.
         grid_xx, grid_yy = np.meshgrid(np.arange(bin_xx[0] - bin_xx[1]/2, bin_xx[-1] + 3*bin_xx[1]/2 + 0.0000001, bin_xx[1]),
                                     np.arange(bin_yy[0] - bin_yy[1]/2, bin_yy[-1] + 3*bin_yy[1]/2 + 0.0000001, bin_yy[1]))
