@@ -118,8 +118,6 @@ class MACSData:
 
             # change grid_xx, grid_yy generate function. Solve the float arithmetic issue.
             grid_xx, grid_yy = self.__mgrid_generate__(bin_xx, bin_yy)
-            #size_xx = int(np.floor((bin_xx[-1] - bin_xx[0] + 3/2*bin_xx[1] + 0.00001) / bin_xx[1])) + 1
-            #size_yy = int(np.floor((bin_yy[-1] - bin_yy[0] + 3/2*bin_yy[1] + 0.00001) / bin_yy[1])) + 1
             size_xx, size_yy = np.shape(grid_xx)
             _intensity = np.zeros((size_xx, size_yy))
             _error = np.zeros((size_xx, size_yy))
@@ -249,6 +247,8 @@ class Plot1D:
             ax.set_ylabel(ylabel)
         if title:
             plt.title(title)
+        elif self.name:
+            plt.title(self.name)
         if legend:
             plt.legend(legend)
 
@@ -257,10 +257,11 @@ class Plot1D:
         self.ax = ax
         return fig, ax
 
-    def __init__(self, grid_xx, intensity, error):
+    def __init__(self, grid_xx, intensity, error, name=None):
         self.grid_xx = grid_xx
         self.intensity = intensity
         self.error = error
+        self.name = name
 
 
 class Plot2D:
@@ -298,6 +299,8 @@ class Plot2D:
             ax.set_ylabel(ylabel)
         if title:
             plt.title(title)
+        elif self.name:
+            plt.title(self.name)
         if legend:
             plt.legend(legend)
         plt.show()
@@ -306,11 +309,12 @@ class Plot2D:
         self.ax = ax
         return fig, ax
 
-    def __init__(self, grid_xx, grid_yy, intensity, error):
+    def __init__(self, grid_xx, grid_yy, intensity, error, name=None):
         self.grid_xx = grid_xx
         self.grid_yy = grid_yy
         self.intensity = intensity
         self.error = error
+        self.name = name
 
 
 def subtraction(plot1, plot2, plotmode=0, *args, **kwargs):
