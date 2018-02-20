@@ -37,6 +37,7 @@ class Fit1D:
         data = ufit.as_data(x=self.grid_xx, y=self.intensity, dy=self.error, name=self.name)
         fitresult = self.model.fit(data)
         fitresult.printout()
+        plt.figure()
         fitresult.plot()
         self.fitresult = fitresult
 
